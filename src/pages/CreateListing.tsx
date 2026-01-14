@@ -1,15 +1,15 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { 
   ArrowLeft, 
-  Upload, 
   X, 
   ImagePlus, 
   ShoppingBag, 
   Briefcase,
   MessageSquare,
-  Sparkles
+  Sparkles,
+  Loader2
 } from "lucide-react";
 import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
@@ -24,6 +24,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/hooks/useAuth";
+import { useCategories } from "@/hooks/useCategories";
+import { useCreateProduct } from "@/hooks/useProducts";
+import { useCreateService } from "@/hooks/useServices";
+import { useCreateDemand } from "@/hooks/useDemands";
+import { useImageUpload } from "@/hooks/useImageUpload";
+import { toast } from "sonner";
 
 type ListingType = "product" | "service" | "demand";
 
@@ -33,33 +40,120 @@ const listingTypes = [
   { id: "demand" as const, label: "Request", icon: MessageSquare, description: "Post a request" },
 ];
 
-const productCategories = ["Electronics", "Books", "Furniture", "Clothing", "Sports", "Other"];
-const serviceCategories = ["Tutoring", "Tech", "Design", "Creative", "Career", "Other"];
-const conditions = ["New", "Like New", "Good", "Fair"];
+const conditions = ["new", "like-new", "good", "fair"];
 
 export default function CreateListing() {
   const [listingType, setListingType] = useState<ListingType>("product");
-  const [images, setImages] = useState<string[]>([]);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [images, setImages] = useState<File[]>([]);
+  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [price, setPrice] = useState("");
+  const [condition, setCondition] = useState("");
+  const [categoryId, setCategoryId] = useState("");
+  const [location, setLocation] = useState("");
+  
+  const { user, loading: authLoading } = useAuth();
+  const navigate = useNavigate();
+  
+  const { data: categories } = useCategories(listingType);
+  const createProduct = useCreateProduct();
+  const createService = useCreateService();
+  const createDemand = useCreateDemand();
+  const { uploadImage, uploading } = useImageUpload();
+  
+  const isSubmitting = createProduct.isPending || createService.isPending || createDemand.isPending || uploading;
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files) {
-      const newImages = Array.from(files).map((file) => URL.createObjectURL(file));
-      setImages([...images, ...newImages].slice(0, 5));
+      const newFiles = Array.from(files);
+      const newPreviews = newFiles.map((file) => URL.createObjectURL(file));
+      setImages([...images, ...newFiles].slice(0, 5));
+      setImagePreviews([...imagePreviews, ...newPreviews].slice(0, 5));
     }
   };
 
   const removeImage = (index: number) => {
     setImages(images.filter((_, i) => i !== index));
+    setImagePreviews(imagePreviews.filter((_, i) => i !== index));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSubmitting(true);
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    setIsSubmitting(false);
+    
+    if (!user) {
+      toast.error("Please login to create a listing");
+      navigate("/auth");
+      return;
+    }
+    
+    try {
+      let imageUrl: string | undefined;
+      
+      // Upload first image if exists
+      if (images.length > 0) {
+        imageUrl = (await uploadImage(images[0])) ?? undefined;
+      }
+      
+      if (listingType === "product") {
+        await createProduct.mutateAsync({
+          title,
+          description,
+          price: parseFloat(price) || 0,
+          condition: condition as "new" | "like-new" | "good" | "fair",
+          image_url: imageUrl,
+          location,
+          category_id: categoryId || undefined,
+        });
+      } else if (listingType === "service") {
+        await createService.mutateAsync({
+          title,
+          description,
+          price,
+          image_url: imageUrl,
+          location,
+          category_id: categoryId || undefined,
+        });
+      } else {
+        await createDemand.mutateAsync({
+          title,
+          description,
+          budget: price,
+          category_id: categoryId || undefined,
+        });
+      }
+      
+      toast.success("Listing created successfully!");
+      navigate(listingType === "product" ? "/products" : listingType === "service" ? "/services" : "/demand");
+    } catch (error) {
+      toast.error("Failed to create listing. Please try again.");
+      console.error(error);
+    }
   };
+
+  if (authLoading) {
+    return (
+      <Layout>
+        <div className="min-h-screen flex items-center justify-center">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        </div>
+      </Layout>
+    );
+  }
+
+  if (!user) {
+    return (
+      <Layout>
+        <div className="min-h-screen flex flex-col items-center justify-center gap-4">
+          <p className="text-lg text-muted-foreground">Please login to create a listing</p>
+          <Link to="/auth">
+            <Button variant="hero">Login / Sign Up</Button>
+          </Link>
+        </div>
+      </Layout>
+    );
+  }
 
   return (
     <Layout>
@@ -99,7 +193,10 @@ export default function CreateListing() {
                 <button
                   key={type.id}
                   type="button"
-                  onClick={() => setListingType(type.id)}
+                  onClick={() => {
+                    setListingType(type.id);
+                    setCategoryId("");
+                  }}
                   className={cn(
                     "flex flex-col items-center gap-3 p-6 rounded-xl border-2 transition-all duration-200",
                     listingType === type.id
@@ -137,7 +234,7 @@ export default function CreateListing() {
               <div className="space-y-4">
                 <Label className="text-base">Photos</Label>
                 <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
-                  {images.map((img, index) => (
+                  {imagePreviews.map((img, index) => (
                     <div key={index} className="relative aspect-square rounded-xl overflow-hidden bg-muted">
                       <img src={img} alt="" className="w-full h-full object-cover" />
                       <button
@@ -149,7 +246,7 @@ export default function CreateListing() {
                       </button>
                     </div>
                   ))}
-                  {images.length < 5 && (
+                  {imagePreviews.length < 5 && (
                     <label className="aspect-square rounded-xl border-2 border-dashed border-border hover:border-primary cursor-pointer flex flex-col items-center justify-center gap-2 text-muted-foreground hover:text-primary transition-colors">
                       <ImagePlus className="w-6 h-6" />
                       <span className="text-xs">Add Photo</span>
@@ -176,6 +273,8 @@ export default function CreateListing() {
               </Label>
               <Input
                 id="title"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
                 placeholder={
                   listingType === "product"
                     ? "e.g., MacBook Pro 2021 - Excellent Condition"
@@ -191,14 +290,14 @@ export default function CreateListing() {
             {/* Category */}
             <div className="space-y-2">
               <Label className="text-base">Category</Label>
-              <Select required>
+              <Select value={categoryId} onValueChange={setCategoryId}>
                 <SelectTrigger className="h-12">
                   <SelectValue placeholder="Select a category" />
                 </SelectTrigger>
                 <SelectContent>
-                  {(listingType === "service" ? serviceCategories : productCategories).map((cat) => (
-                    <SelectItem key={cat} value={cat.toLowerCase()}>
-                      {cat}
+                  {categories?.map((cat) => (
+                    <SelectItem key={cat.id} value={cat.id}>
+                      {cat.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -209,14 +308,14 @@ export default function CreateListing() {
             {listingType === "product" && (
               <div className="space-y-2">
                 <Label className="text-base">Condition</Label>
-                <Select required>
+                <Select value={condition} onValueChange={setCondition} required>
                   <SelectTrigger className="h-12">
                     <SelectValue placeholder="Select condition" />
                   </SelectTrigger>
                   <SelectContent>
-                    {conditions.map((condition) => (
-                      <SelectItem key={condition} value={condition.toLowerCase().replace(" ", "-")}>
-                        {condition}
+                    {conditions.map((cond) => (
+                      <SelectItem key={cond} value={cond}>
+                        {cond.charAt(0).toUpperCase() + cond.slice(1).replace("-", " ")}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -234,6 +333,8 @@ export default function CreateListing() {
                 <Input
                   id="price"
                   type="text"
+                  value={price}
+                  onChange={(e) => setPrice(e.target.value)}
                   placeholder={listingType === "service" ? "500/hr or 5000+" : "e.g., 25000"}
                   className="pl-8 h-12"
                   required
@@ -252,22 +353,27 @@ export default function CreateListing() {
               <Label htmlFor="description" className="text-base">Description</Label>
               <Textarea
                 id="description"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
                 placeholder="Describe your listing in detail..."
                 rows={5}
                 required
               />
             </div>
 
-            {/* Location */}
-            <div className="space-y-2">
-              <Label htmlFor="location" className="text-base">Location</Label>
-              <Input
-                id="location"
-                placeholder="e.g., Block A, Hostel 3, Library"
-                className="h-12"
-                required
-              />
-            </div>
+            {/* Location (for product/service) */}
+            {listingType !== "demand" && (
+              <div className="space-y-2">
+                <Label htmlFor="location" className="text-base">Location</Label>
+                <Input
+                  id="location"
+                  value={location}
+                  onChange={(e) => setLocation(e.target.value)}
+                  placeholder="e.g., Block A, Hostel 3, Library"
+                  className="h-12"
+                />
+              </div>
+            )}
 
             {/* Submit */}
             <div className="flex gap-4 pt-4">
@@ -275,7 +381,14 @@ export default function CreateListing() {
                 <Link to="/">Cancel</Link>
               </Button>
               <Button type="submit" variant="hero" className="flex-1" disabled={isSubmitting}>
-                {isSubmitting ? "Posting..." : "Post Listing"}
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Posting...
+                  </>
+                ) : (
+                  "Post Listing"
+                )}
               </Button>
             </div>
           </motion.form>

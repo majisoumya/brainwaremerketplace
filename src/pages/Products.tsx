@@ -141,6 +141,7 @@ export default function Products() {
                       id={product.id}
                       title={product.title}
                       price={product.price}
+                      originalPrice={product.original_price}
                       image={product.image_url || "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400"}
                       category={product.category_name || "Other"}
                       condition={product.condition || "good"}

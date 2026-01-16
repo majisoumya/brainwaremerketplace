@@ -49,6 +49,7 @@ export default function CreateListing() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [price, setPrice] = useState("");
+  const [originalPrice, setOriginalPrice] = useState("");
   const [condition, setCondition] = useState("");
   const [categoryId, setCategoryId] = useState("");
   const [location, setLocation] = useState("");
@@ -101,6 +102,7 @@ export default function CreateListing() {
           title,
           description,
           price: parseFloat(price) || 0,
+          original_price: originalPrice ? parseFloat(originalPrice) : undefined,
           condition: condition as "new" | "like-new" | "good" | "fair",
           image_url: imageUrl,
           location,
@@ -323,28 +325,56 @@ export default function CreateListing() {
               </div>
             )}
 
-            {/* Price */}
-            <div className="space-y-2">
-              <Label htmlFor="price" className="text-base">
-                {listingType === "demand" ? "Budget" : "Price"}
+            {/* Pricing */}
+            <div className="space-y-4">
+              <Label className="text-base">
+                {listingType === "demand" ? "Budget" : "Pricing"}
               </Label>
-              <div className="relative">
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground">₹</span>
-                <Input
-                  id="price"
-                  type="text"
-                  value={price}
-                  onChange={(e) => setPrice(e.target.value)}
-                  placeholder={listingType === "service" ? "500/hr or 5000+" : "e.g., 25000"}
-                  className="pl-8 h-12"
-                  required
-                />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="price" className="text-sm text-muted-foreground">
+                    {listingType === "product" ? "Selling Price (₹) *" : listingType === "demand" ? "Budget (₹)" : "Price"}
+                  </Label>
+                  <div className="relative">
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground">₹</span>
+                    <Input
+                      id="price"
+                      type="text"
+                      value={price}
+                      onChange={(e) => setPrice(e.target.value)}
+                      placeholder={listingType === "service" ? "500/hr or 5000+" : "e.g., 25000"}
+                      className="pl-8 h-12"
+                      required
+                    />
+                  </div>
+                </div>
+                {listingType === "product" && (
+                  <div className="space-y-2">
+                    <Label htmlFor="originalPrice" className="text-sm text-muted-foreground">
+                      Original Price (₹)
+                    </Label>
+                    <div className="relative">
+                      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground">₹</span>
+                      <Input
+                        id="originalPrice"
+                        type="text"
+                        value={originalPrice}
+                        onChange={(e) => setOriginalPrice(e.target.value)}
+                        placeholder="e.g., 70000"
+                        className="pl-8 h-12"
+                      />
+                    </div>
+                    <p className="text-xs text-muted-foreground">For discount calculation & buyer reference</p>
+                  </div>
+                )}
               </div>
-              {listingType === "product" && (
-                <Button type="button" variant="ghost" size="sm" className="gap-2 text-primary">
+              {listingType === "product" && price && originalPrice && parseFloat(originalPrice) > parseFloat(price) && (
+                <div className="bg-success/10 text-success border border-success/20 rounded-lg p-3 flex items-center gap-2">
                   <Sparkles className="w-4 h-4" />
-                  Suggest price with AI
-                </Button>
+                  <span className="text-sm font-medium">
+                    {Math.round(((parseFloat(originalPrice) - parseFloat(price)) / parseFloat(originalPrice)) * 100)}% discount will be shown to buyers
+                  </span>
+                </div>
               )}
             </div>
 

@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Heart, MapPin, Clock } from "lucide-react";
+import { Heart, MapPin, Clock, Percent } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
@@ -8,6 +8,7 @@ interface ProductCardProps {
   id: string;
   title: string;
   price: number;
+  originalPrice?: number | null;
   image: string;
   category: string;
   condition: "new" | "like-new" | "good" | "fair";
@@ -27,6 +28,7 @@ export function ProductCard({
   id,
   title,
   price,
+  originalPrice,
   image,
   category,
   condition,
@@ -34,6 +36,11 @@ export function ProductCard({
   postedAt,
   isFavorite = false,
 }: ProductCardProps) {
+  const discountPercent =
+    originalPrice && originalPrice > price
+      ? Math.round(((originalPrice - price) / originalPrice) * 100)
+      : null;
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -50,6 +57,13 @@ export function ProductCard({
               alt={title}
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
             />
+            {/* Discount Badge */}
+            {discountPercent && (
+              <Badge className="absolute top-3 left-3 bg-destructive text-destructive-foreground font-bold">
+                <Percent className="w-3 h-3 mr-1" />
+                {discountPercent}% OFF
+              </Badge>
+            )}
             <button
               onClick={(e) => {
                 e.preventDefault();
@@ -83,9 +97,16 @@ export function ProductCard({
               </h3>
             </div>
 
-            <p className="text-xl font-bold text-primary">
-              ₹{price.toLocaleString()}
-            </p>
+            <div className="flex items-baseline gap-2">
+              <p className="text-xl font-bold text-primary">
+                ₹{price.toLocaleString()}
+              </p>
+              {originalPrice && originalPrice > price && (
+                <p className="text-sm text-muted-foreground line-through">
+                  ₹{originalPrice.toLocaleString()}
+                </p>
+              )}
+            </div>
 
             <div className="flex items-center justify-between text-xs text-muted-foreground">
               <div className="flex items-center gap-1">

@@ -12,13 +12,17 @@ import {
   Laptop,
   BookOpen,
   Sofa,
-  Shirt
+  Shirt,
+  Moon,
+  Sun
 } from "lucide-react";
 import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ProductCard } from "@/components/cards/ProductCard";
 import { ServiceCard } from "@/components/cards/ServiceCard";
+import { useTheme } from "next-themes";
+import { useEffect, useState } from "react";
 import heroBg from "@/assets/hero-bg.jpg";
 
 const featuredProducts = [
@@ -124,8 +128,32 @@ const stats = [
 ];
 
 export default function Index() {
+  const { theme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   return (
     <Layout>
+      {/* Floating Theme Toggle */}
+      {mounted && (
+        <motion.button
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.3, delay: 0.5 }}
+          onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+          className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full bg-primary text-primary-foreground shadow-xl hover:shadow-2xl flex items-center justify-center transition-all duration-300 hover:scale-110"
+          aria-label="Toggle theme"
+        >
+          {theme === "dark" ? (
+            <Sun className="w-6 h-6" />
+          ) : (
+            <Moon className="w-6 h-6" />
+          )}
+        </motion.button>
+      )}
       {/* Hero Section */}
       <section className="relative min-h-[90vh] flex items-center overflow-hidden">
         {/* Background */}

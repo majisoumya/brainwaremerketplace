@@ -1,10 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X, Search, User, Plus, ShoppingBag, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -70,6 +71,7 @@ export function Navbar() {
 
           {/* Desktop Actions */}
           <div className="hidden lg:flex items-center gap-3">
+            <ThemeToggle />
             <Button variant="ghost" size="icon" className="rounded-full">
               <Search className="w-5 h-5" />
             </Button>
@@ -151,7 +153,10 @@ export function Navbar() {
                   {link.name}
                 </Link>
               ))}
-              <div className="pt-4 space-y-2 border-t border-border">
+              <div className="pt-4 space-y-2 border-t border-border flex flex-col gap-2">
+                <div className="flex justify-end">
+                  <ThemeToggle />
+                </div>
                 <Link to="/create" onClick={() => setIsOpen(false)}>
                   <Button variant="hero" className="w-full gap-2">
                     <Plus className="w-4 h-4" />

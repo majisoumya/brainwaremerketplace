@@ -99,6 +99,13 @@ export function Navbar() {
                     <p className="text-xs text-muted-foreground truncate">{user.email}</p>
                   </div>
                   <DropdownMenuSeparator />
+                  <Link to="/profile">
+                    <DropdownMenuItem className="cursor-pointer">
+                      <User className="w-4 h-4 mr-2" />
+                      My Profile
+                    </DropdownMenuItem>
+                  </Link>
+                  <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleSignOut} className="text-destructive cursor-pointer">
                     <LogOut className="w-4 h-4 mr-2" />
                     Sign Out
@@ -159,10 +166,18 @@ export function Navbar() {
                   </Button>
                 </Link>
                 {user ? (
-                  <Button variant="outline" className="w-full gap-2" onClick={handleSignOut}>
-                    <LogOut className="w-4 h-4" />
-                    Sign Out
-                  </Button>
+                  <>
+                    <Link to="/profile" onClick={() => setIsOpen(false)}>
+                      <Button variant="secondary" className="w-full gap-2">
+                        <User className="w-4 h-4" />
+                        My Profile
+                      </Button>
+                    </Link>
+                    <Button variant="outline" className="w-full gap-2" onClick={handleSignOut}>
+                      <LogOut className="w-4 h-4" />
+                      Sign Out
+                    </Button>
+                  </>
                 ) : (
                   <Link to="/auth" onClick={() => setIsOpen(false)}>
                     <Button variant="outline" className="w-full gap-2">

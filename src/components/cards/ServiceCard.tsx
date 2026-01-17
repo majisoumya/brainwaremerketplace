@@ -3,14 +3,14 @@ import { motion } from "framer-motion";
 import { Star, User, Clock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
-interface ServiceCardProps {
+export interface ServiceCardProps {
   id: string;
   title: string;
-  description: string;
+  description?: string;
   price: string;
   image: string;
   category: string;
-  provider: {
+  provider?: {
     name: string;
     avatar: string;
     rating: number;
@@ -54,30 +54,38 @@ export function ServiceCard({
               <h3 className="font-semibold text-foreground line-clamp-1 group-hover:text-primary transition-colors">
                 {title}
               </h3>
-              <p className="text-sm text-muted-foreground line-clamp-2">
-                {description}
-              </p>
+              {description && (
+                <p className="text-sm text-muted-foreground line-clamp-2">
+                  {description}
+                </p>
+              )}
             </div>
 
             {/* Provider */}
-            <div className="flex items-center gap-3 pt-2 border-t border-border">
-              <div className="w-8 h-8 rounded-full bg-muted overflow-hidden">
-                <img
-                  src={provider.avatar}
-                  alt={provider.name}
-                  className="w-full h-full object-cover"
-                />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate">{provider.name}</p>
-                <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                  <Star className="w-3 h-3 text-warning fill-warning" />
-                  <span>{provider.rating}</span>
-                  <span>({provider.reviews})</span>
+            {provider ? (
+              <div className="flex items-center gap-3 pt-2 border-t border-border">
+                <div className="w-8 h-8 rounded-full bg-muted overflow-hidden">
+                  <img
+                    src={provider.avatar}
+                    alt={provider.name}
+                    className="w-full h-full object-cover"
+                  />
                 </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium truncate">{provider.name}</p>
+                  <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                    <Star className="w-3 h-3 text-warning fill-warning" />
+                    <span>{provider.rating}</span>
+                    <span>({provider.reviews})</span>
+                  </div>
+                </div>
+                <p className="font-bold text-primary">{price}</p>
               </div>
-              <p className="font-bold text-primary">{price}</p>
-            </div>
+            ) : (
+              <div className="flex items-center justify-between pt-2 border-t border-border">
+                <p className="font-bold text-primary">{price}</p>
+              </div>
+            )}
           </div>
         </div>
       </Link>

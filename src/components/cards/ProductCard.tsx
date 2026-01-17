@@ -4,16 +4,16 @@ import { Heart, MapPin, Clock, Percent } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
-interface ProductCardProps {
+export interface ProductCardProps {
   id: string;
   title: string;
   price: number;
   originalPrice?: number | null;
   image: string;
   category: string;
-  condition: "new" | "like-new" | "good" | "fair";
-  location: string;
-  postedAt: string;
+  condition?: "new" | "like-new" | "good" | "fair";
+  location?: string;
+  postedAt?: string;
   isFavorite?: boolean;
 }
 
@@ -76,14 +76,16 @@ export function ProductCard({
             >
               <Heart className={cn("w-4 h-4", isFavorite && "fill-current")} />
             </button>
-            <Badge
-              className={cn(
-                "absolute bottom-3 left-3 capitalize",
-                conditionColors[condition]
-              )}
-            >
-              {condition.replace("-", " ")}
-            </Badge>
+            {condition && (
+              <Badge
+                className={cn(
+                  "absolute bottom-3 left-3 capitalize",
+                  conditionColors[condition]
+                )}
+              >
+                {condition.replace("-", " ")}
+              </Badge>
+            )}
           </div>
 
           {/* Content */}
@@ -109,14 +111,18 @@ export function ProductCard({
             </div>
 
             <div className="flex items-center justify-between text-xs text-muted-foreground">
-              <div className="flex items-center gap-1">
-                <MapPin className="w-3 h-3" />
-                {location}
-              </div>
-              <div className="flex items-center gap-1">
-                <Clock className="w-3 h-3" />
-                {postedAt}
-              </div>
+              {location && (
+                <div className="flex items-center gap-1">
+                  <MapPin className="w-3 h-3" />
+                  {location}
+                </div>
+              )}
+              {postedAt && (
+                <div className="flex items-center gap-1">
+                  <Clock className="w-3 h-3" />
+                  {postedAt}
+                </div>
+              )}
             </div>
           </div>
         </div>

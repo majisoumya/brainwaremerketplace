@@ -20,6 +20,7 @@ export interface Product {
   owner_avatar?: string | null;
   owner_verified?: boolean;
   owner_phone?: string | null;
+  owner_whatsapp?: string | null;
   category_name?: string | null;
 }
 
@@ -64,7 +65,7 @@ export function useProductDetail(id: string) {
       // Fetch owner info from profiles_public view
       const { data: owner } = await supabase
         .from("profiles_public")
-        .select("username, avatar_url, is_verified")
+        .select("username, avatar_url, is_verified, full_name, whatsapp")
         .eq("id", product.owner_id)
         .single();
 
@@ -78,13 +79,63 @@ export function useProductDetail(id: string) {
       return {
         ...product,
         category_name: product.categories?.name || null,
-        owner_name: ownerProfile?.full_name || owner?.username || null,
+        owner_name: ownerProfile?.full_name || owner?.full_name || owner?.username || null,
         owner_avatar: owner?.avatar_url || null,
         owner_verified: owner?.is_verified || false,
         owner_phone: ownerProfile?.phone || null,
+        owner_whatsapp: owner?.whatsapp || null,
       } as Product;
     },
     enabled: !!id,
+  });
+}
+
+export function useSimilarProducts(categoryId: string | null, currentProductId: string) {
+  return useQuery({
+    queryKey: ["similar-products", categoryId, currentProductId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("products")
+        .select(`
+          *,
+          categories (name)
+        `)
+        .eq("is_active", true)
+        .neq("id", currentProductId)
+        .eq("category_id", categoryId!)
+        .limit(4)
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+      return (data ?? []).map((p: any) => ({
+        ...p,
+        category_name: p.categories?.name || null,
+      })) as Product[];
+    },
+    enabled: !!categoryId,
+  });
+}
+
+export function useUserProducts(userId: string | undefined) {
+  return useQuery({
+    queryKey: ["user-products", userId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("products")
+        .select(`
+          *,
+          categories (name)
+        `)
+        .eq("owner_id", userId!)
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+      return (data ?? []).map((p: any) => ({
+        ...p,
+        category_name: p.categories?.name || null,
+      })) as Product[];
+    },
+    enabled: !!userId,
   });
 }
 

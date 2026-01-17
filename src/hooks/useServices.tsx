@@ -84,6 +84,29 @@ export function useServiceDetail(id: string) {
   });
 }
 
+export function useUserServices(userId: string | undefined) {
+  return useQuery({
+    queryKey: ["user-services", userId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("services")
+        .select(`
+          *,
+          categories (name)
+        `)
+        .eq("owner_id", userId!)
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+      return (data ?? []).map((s: any) => ({
+        ...s,
+        category_name: s.categories?.name || null,
+      })) as Service[];
+    },
+    enabled: !!userId,
+  });
+}
+
 export function useCreateService() {
   const queryClient = useQueryClient();
   const { user } = useAuth();

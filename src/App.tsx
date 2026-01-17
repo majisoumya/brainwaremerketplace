@@ -15,6 +15,7 @@ import DemandDetail from "./pages/DemandDetail";
 import Auth from "./pages/Auth";
 import CreateListing from "./pages/CreateListing";
 import About from "./pages/About";
+import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -38,6 +39,7 @@ const App = () => (
               <Route path="/auth" element={<Auth />} />
               <Route path="/create" element={<CreateListing />} />
               <Route path="/about" element={<About />} />
+              <Route path="/profile" element={<Profile />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>

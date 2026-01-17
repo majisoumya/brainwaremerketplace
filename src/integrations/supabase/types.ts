@@ -149,6 +149,7 @@ export type Database = {
           phone: string | null
           updated_at: string
           username: string | null
+          whatsapp: string | null
         }
         Insert: {
           avatar_url?: string | null
@@ -160,6 +161,7 @@ export type Database = {
           phone?: string | null
           updated_at?: string
           username?: string | null
+          whatsapp?: string | null
         }
         Update: {
           avatar_url?: string | null
@@ -171,6 +173,7 @@ export type Database = {
           phone?: string | null
           updated_at?: string
           username?: string | null
+          whatsapp?: string | null
         }
         Relationships: []
       }
@@ -230,23 +233,29 @@ export type Database = {
         Row: {
           avatar_url: string | null
           created_at: string | null
+          full_name: string | null
           id: string | null
           is_verified: boolean | null
           username: string | null
+          whatsapp: string | null
         }
         Insert: {
           avatar_url?: string | null
           created_at?: string | null
+          full_name?: string | null
           id?: string | null
           is_verified?: boolean | null
           username?: string | null
+          whatsapp?: string | null
         }
         Update: {
           avatar_url?: string | null
           created_at?: string | null
+          full_name?: string | null
           id?: string | null
           is_verified?: boolean | null
           username?: string | null
+          whatsapp?: string | null
         }
         Relationships: []
       }

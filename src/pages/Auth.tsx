@@ -73,41 +73,79 @@ export default function Auth() {
     }
     
     try {
-      const { error } = await signUp(email, password, fullName);
+      const { data, error } = await signUp(email, password, fullName);
+      
       if (error) {
+        console.error("Signup error:", error);
         if (error.message.includes("already registered")) {
           toast.error("This email is already registered. Please login instead.");
         } else {
           toast.error(error.message);
         }
+        setIsLoading(false);
+        return;
+      }
+      
+      // Log the response for debugging
+      console.log("Signup response:", { user: data?.user?.id, session: !!data?.session });
+      
+      // Check if email confirmation is required
+      if (data && data.user && data.session) {
+        // User is logged in immediately (email confirmation disabled)
+        console.log("User logged in immediately, creating profile...");
+        
+        // Wait a bit for trigger to create profile, then fetch
+        setTimeout(async () => {
+          await sendWelcomeEmail(email, fullName);
+          toast.success("Account created! Welcome!");
+          navigate("/");
+        }, 1000);
+      } else if (data && data.user && !data.session) {
+        // Email confirmation required - user created but not logged in
+        console.log("Email confirmation required");
+        toast.success("Account created! Please check your email to confirm your account before logging in.");
+        // Reset form
+        setEmail("");
+        setPassword("");
+        setFullName("");
+        setIsLoading(false);
       } else {
-        // Send welcome email
-        await sendWelcomeEmail(email, fullName);
-        toast.success("Account created! Check your email for a welcome message.");
-        navigate("/");
+        // Unexpected case
+        console.error("Unexpected signup response:", data);
+        toast.error("Account creation may have failed. Please try again.");
+        setIsLoading(false);
       }
     } catch (err) {
+      console.error("Signup exception:", err);
       toast.error("An unexpected error occurred");
-    } finally {
       setIsLoading(false);
     }
   };
-
   const handleGoogleSignIn = async () => {
     setIsLoading(true);
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
+      const { data, error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
           redirectTo: `${window.location.origin}/`,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          },
         },
       });
+      
       if (error) {
+        console.error("Google OAuth error:", error);
         toast.error(error.message);
+        setIsLoading(false);
+      } else {
+        // OAuth redirect will happen, don't set loading to false
+        // The auth state change handler will handle the rest
       }
     } catch (err) {
+      console.error("Google OAuth exception:", err);
       toast.error("Failed to sign in with Google");
-    } finally {
       setIsLoading(false);
     }
   };

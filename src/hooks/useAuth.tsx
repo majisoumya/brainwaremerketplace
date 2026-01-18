@@ -61,24 +61,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
-  const fetchProfile = async (userId: string) => {
-    const { data, error } = await supabase
-      .from("profiles")
-      .select("*")
-      .eq("id", userId)
-      .maybeSingle();
+    const fetchProfile = async (userId: string, retries = 3) => {
+    for (let i = 0; i < retries; i++) {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", userId)
+        .maybeSingle();
 
-    if (data && !error) {
-      setProfile({
-        id: data.id,
-        username: data.username,
-        full_name: data.full_name,
-        avatar_url: data.avatar_url,
-        phone: data.phone,
-        is_verified: data.is_verified,
-        is_admin: (data as { is_admin?: boolean }).is_admin ?? false,
-      });
+      if (data && !error) {
+        setProfile({
+          id: data.id,
+          username: data.username,
+          full_name: data.full_name,
+          avatar_url: data.avatar_url,
+          phone: data.phone,
+          is_verified: data.is_verified,
+          is_admin: (data as { is_admin?: boolean }).is_admin ?? false,
+        });
+        return;
+      }
+      
+      // If profile doesn't exist and this is a new user, wait and retry
+      if (i < retries - 1) {
+        await new Promise(resolve => setTimeout(resolve, 500 * (i + 1)));
+      }
     }
+    
+    // If profile still doesn't exist, log error
+    console.error("Profile not found for user:", userId);
   };
 
   const signUp = async (email: string, password: string, fullName: string) => {

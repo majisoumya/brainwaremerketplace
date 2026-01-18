@@ -82,7 +82,7 @@ export default function Auth() {
         }
       } else {
         // Check if email confirmation is required
-        if (data.user && data.session) {
+        if (data && data.user && data.session) {
           // User is logged in immediately (email confirmation disabled)
           await sendWelcomeEmail(email, fullName);
           toast.success("Account created! Welcome!");

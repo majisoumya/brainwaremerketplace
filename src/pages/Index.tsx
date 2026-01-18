@@ -1,7 +1,6 @@
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { 
-  Search, 
   ArrowRight, 
   ShoppingBag, 
   Briefcase, 
@@ -13,17 +12,22 @@ import {
   BookOpen,
   Sofa,
   Shirt,
-  Moon,
-  Sun
+  Filter,
+  Search
 } from "lucide-react";
 import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ProductCard } from "@/components/cards/ProductCard";
 import { ServiceCard } from "@/components/cards/ServiceCard";
-import { useTheme } from "next-themes";
-import { useEffect, useState } from "react";
 import heroBg from "@/assets/hero-bg.jpg";
+
+const budgetFilters = [
+  { label: "Free", value: 0, color: "bg-green-500" },
+  { label: "<₹100", value: 100, color: "bg-blue-500" },
+  { label: "<₹500", value: 500, color: "bg-purple-500" },
+  { label: "<₹1000", value: 1000, color: "bg-orange-500" },
+];
 
 const featuredProducts = [
   {
@@ -128,32 +132,8 @@ const stats = [
 ];
 
 export default function Index() {
-  const { theme, setTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
   return (
     <Layout>
-      {/* Floating Theme Toggle */}
-      {mounted && (
-        <motion.button
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.3, delay: 0.5 }}
-          onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-          className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full bg-primary text-primary-foreground shadow-xl hover:shadow-2xl flex items-center justify-center transition-all duration-300 hover:scale-110"
-          aria-label="Toggle theme"
-        >
-          {theme === "dark" ? (
-            <Sun className="w-6 h-6" />
-          ) : (
-            <Moon className="w-6 h-6" />
-          )}
-        </motion.button>
-      )}
       {/* Hero Section */}
       <section className="relative min-h-[90vh] flex items-center overflow-hidden">
         {/* Background */}
@@ -263,8 +243,39 @@ export default function Index() {
         </motion.div>
       </section>
 
-      {/* Categories Section */}
+      {/* Shop by Budget Section */}
       <section className="py-20 bg-secondary/30">
+        <div className="container mx-auto px-4">
+          <div className="flex items-center gap-2 mb-8">
+            <span className="text-primary text-2xl">↘</span>
+            <h2 className="font-display text-2xl md:text-3xl font-bold">Shop by Budget</h2>
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {budgetFilters.map((budget, index) => (
+              <motion.div
+                key={budget.label}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.4, delay: index * 0.1 }}
+              >
+                <Link to={`/products?maxPrice=${budget.value}`}>
+                  <div className="group bg-card rounded-2xl p-6 border border-border hover:border-primary/50 transition-all duration-300 hover:shadow-lg text-center card-hover">
+                    <div className={`w-14 h-14 mx-auto mb-4 rounded-xl ${budget.color} flex items-center justify-center`}>
+                      <Filter className="w-7 h-7 text-white" />
+                    </div>
+                    <h3 className="font-semibold text-lg">{budget.label}</h3>
+                  </div>
+                </Link>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Categories Section */}
+      <section className="py-20">
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
             <h2 className="font-display text-3xl md:text-4xl font-bold mb-4">

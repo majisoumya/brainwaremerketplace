@@ -1,6 +1,8 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { SMTPClient } from "https://deno.land/x/denomailer@1.6.0/mod.ts";
 
-const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
+const SMTP_EMAIL = Deno.env.get("SMTP_EMAIL") || "panchu7216@gmail.com";
+const SMTP_PASSWORD = Deno.env.get("SMTP_PASSWORD");
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -20,10 +22,10 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    if (!RESEND_API_KEY) {
-      console.error("RESEND_API_KEY not configured");
+    if (!SMTP_PASSWORD) {
+      console.error("SMTP_PASSWORD not configured");
       return new Response(
-        JSON.stringify({ error: "Email service not configured" }),
+        JSON.stringify({ error: "Email service not configured - SMTP password missing" }),
         {
           status: 500,
           headers: { "Content-Type": "application/json", ...corsHeaders },
@@ -32,6 +34,19 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     const { email, fullName }: WelcomeEmailRequest = await req.json();
+
+    // Create SMTP client for Gmail
+    const client = new SMTPClient({
+      connection: {
+        hostname: "smtp.gmail.com",
+        port: 465,
+        tls: true,
+        auth: {
+          username: SMTP_EMAIL,
+          password: SMTP_PASSWORD,
+        },
+      },
+    });
 
     const emailHtml = `
       <!DOCTYPE html>
@@ -87,37 +102,26 @@ const handler = async (req: Request): Promise<Response> => {
           </div>
           <div class="footer">
             <p>© 2026 Brainware Marketplace. Made with ❤️ for students.</p>
-            <p>This is a test email from panchu7216@gmail.com</p>
+            <p>Sent from ${SMTP_EMAIL}</p>
           </div>
         </div>
       </body>
       </html>
     `;
 
-    const res = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${RESEND_API_KEY}`,
-      },
-      body: JSON.stringify({
-        from: "Brainware Marketplace <onboarding@resend.dev>",
-        to: [email],
-        subject: "Welcome to Brainware Marketplace! 🎓",
-        html: emailHtml,
-      }),
+    await client.send({
+      from: SMTP_EMAIL,
+      to: email,
+      subject: "Welcome to Brainware Marketplace! 🎓",
+      content: "Welcome to Brainware Marketplace!",
+      html: emailHtml,
     });
 
-    if (!res.ok) {
-      const error = await res.text();
-      console.error("Resend API error:", error);
-      throw new Error(error);
-    }
+    await client.close();
 
-    const data = await res.json();
-    console.log("Welcome email sent successfully:", data);
+    console.log("Welcome email sent successfully to:", email);
 
-    return new Response(JSON.stringify(data), {
+    return new Response(JSON.stringify({ success: true, email }), {
       status: 200,
       headers: {
         "Content-Type": "application/json",

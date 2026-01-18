@@ -72,8 +72,8 @@ export default function Auth() {
       return;
     }
     
-    try {
-      const { error } = await signUp(email, password, fullName);
+        try {
+      const { data, error } = await signUp(email, password, fullName);
       if (error) {
         if (error.message.includes("already registered")) {
           toast.error("This email is already registered. Please login instead.");
@@ -81,17 +81,23 @@ export default function Auth() {
           toast.error(error.message);
         }
       } else {
-        // Send welcome email
-        await sendWelcomeEmail(email, fullName);
-        toast.success("Account created! Check your email for a welcome message.");
-        navigate("/");
+        // Check if email confirmation is required
+        if (data.user && data.session) {
+          // User is logged in immediately (email confirmation disabled)
+          await sendWelcomeEmail(email, fullName);
+          toast.success("Account created! Welcome!");
+          navigate("/");
+        } else {
+          // Email confirmation required
+          toast.success("Account created! Please check your email to confirm your account before logging in.");
+          // Don't navigate - let them know to check email
+        }
       }
     } catch (err) {
       toast.error("An unexpected error occurred");
     } finally {
       setIsLoading(false);
     }
-  };
 
   const handleGoogleSignIn = async () => {
     setIsLoading(true);

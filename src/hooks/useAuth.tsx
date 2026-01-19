@@ -87,6 +87,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               id: userId,
               full_name: fullName,
               avatar_url: avatarUrl,
+              username: null,
+              phone: null,
+              is_verified: false,
+              is_admin: false,
             });
           
           if (!insertError) {
@@ -213,6 +217,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 id: data.user.id,
                 full_name: fullName,
                 avatar_url: avatarUrl,
+                username: null,
+                phone: null,
+                is_verified: false,
+                is_admin: false,
               });
 
             if (insertError) {

@@ -92,14 +92,27 @@ export default function Auth() {
       // Check if email confirmation is required
       if (data && data.user && data.session) {
         // User is logged in immediately (email confirmation disabled)
-        console.log("User logged in immediately, creating profile...");
+        console.log("User logged in immediately, ensuring profile exists...");
         
-        // Wait a bit for trigger to create profile, then fetch
+        // Ensure profile exists using RPC function
+        try {
+          const { error: profileError } = await (supabase.rpc as any)('ensure_user_profile', {
+            user_id: data.user.id
+          });
+
+          if (profileError) {
+            console.warn("RPC ensure_user_profile failed, will retry:", profileError);
+          }
+        } catch (err) {
+          console.warn("Failed to ensure profile via RPC:", err);
+        }
+        
+        // Wait a bit for trigger/profile creation, then fetch and navigate
         setTimeout(async () => {
           await sendWelcomeEmail(email, fullName);
           toast.success("Account created! Welcome!");
           navigate("/");
-        }, 1000);
+        }, 1500);
       } else if (data && data.user && !data.session) {
         // Email confirmation required - user created but not logged in
         console.log("Email confirmation required");
